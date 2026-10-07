@@ -1,0 +1,134 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Pixelwall",
+        "description": "Enter the screen's address on your network and its key. You find the key on pixelwall.nl → Screens → your screen → Home Assistant.",
+        "data": {
+          "host": "Host",
+          "key": "Key"
+        },
+        "data_description": {
+          "host": "For example pixelwall-g4hvh8.local or the IP address.",
+          "key": "Starts with pwk_."
+        }
+      },
+      "zeroconf_confirm": {
+        "title": "Pixelwall found",
+        "description": "Link {name}? Enter its key from {url} (tab Home Assistant).",
+        "data": {
+          "key": "Key"
+        }
+      },
+      "reauth_confirm": {
+        "title": "New key",
+        "description": "The key of {name} was changed. Enter the new one from {url} (tab Home Assistant).",
+        "data": {
+          "key": "Key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach the screen. Is it on and does it run firmware 0.9 or newer?",
+      "invalid_auth": "The key is not correct."
+    },
+    "abort": {
+      "already_configured": "This screen is already set up.",
+      "cannot_connect": "Cannot reach the screen.",
+      "not_pixelwall": "This is not a Pixelwall.",
+      "reauth_successful": "The new key works."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "cloud": {
+        "name": "Connected to pixelwall.nl"
+      }
+    },
+    "button": {
+      "next": {
+        "name": "Next app"
+      },
+      "previous": {
+        "name": "Previous app"
+      },
+      "auto": {
+        "name": "Follow brightness schedule"
+      }
+    },
+    "select": {
+      "app": {
+        "name": "App"
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "WiFi signal"
+      }
+    },
+    "notify": {
+      "message": {
+        "name": "Message"
+      }
+    }
+  },
+  "exceptions": {
+    "unknown_device": {
+      "message": "That device is not a linked Pixelwall."
+    }
+  },
+  "selector": {
+    "icon": {
+      "options": {
+        "bell": "bell",
+        "info": "info",
+        "warning": "warning",
+        "check": "check",
+        "home": "home",
+        "door": "door",
+        "lock": "lock",
+        "car": "car",
+        "mail": "mail",
+        "thermometer": "thermometer",
+        "water": "water",
+        "music": "music",
+        "heart": "heart",
+        "sun": "sun",
+        "bolt": "bolt"
+      }
+    }
+  },
+  "services": {
+    "show_message": {
+      "name": "Show message",
+      "description": "Shows a message on a Pixelwall, queued behind messages still showing.",
+      "fields": {
+        "device_id": {
+          "name": "Screen",
+          "description": "The Pixelwall(s) to show it on."
+        },
+        "message": {
+          "name": "Message",
+          "description": "Up to 200 characters; long texts wrap and pan."
+        },
+        "title": {
+          "name": "Title",
+          "description": "In the coloured bar (default: Home Assistant)."
+        },
+        "icon": {
+          "name": "Icon",
+          "description": "Pixel icon in the bar."
+        },
+        "color": {
+          "name": "Colour",
+          "description": "Colour of the bar."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Seconds on screen (default: as set for the Home Assistant app)."
+        }
+      }
+    }
+  }
+}

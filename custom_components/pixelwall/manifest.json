@@ -1,0 +1,14 @@
+{
+  "domain": "pixelwall",
+  "name": "Pixelwall",
+  "codeowners": ["@robinbohnen"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/PixelWall-nl/pixelwall-homeassistant",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/PixelWall-nl/pixelwall-homeassistant/issues",
+  "requirements": [],
+  "version": "1.0.0",
+  "zeroconf": ["_pixelwall._tcp.local."]
+}

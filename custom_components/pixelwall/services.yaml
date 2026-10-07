@@ -1,0 +1,48 @@
+show_message:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: pixelwall
+          multiple: true
+    message:
+      required: true
+      example: "Er staat iemand voor de deur"
+      selector:
+        text:
+          multiline: true
+    title:
+      example: "Deurbel"
+      selector:
+        text:
+    icon:
+      example: bell
+      selector:
+        select:
+          translation_key: icon
+          options:
+            - bell
+            - info
+            - warning
+            - check
+            - home
+            - door
+            - lock
+            - car
+            - mail
+            - thermometer
+            - water
+            - music
+            - heart
+            - sun
+            - bolt
+    color:
+      selector:
+        color_rgb:
+    duration:
+      selector:
+        number:
+          min: 3
+          max: 600
+          unit_of_measurement: s

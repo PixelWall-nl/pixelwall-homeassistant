@@ -1,0 +1,38 @@
+{
+  "entity": {
+    "button": {
+      "next": {
+        "default": "mdi:skip-next"
+      },
+      "previous": {
+        "default": "mdi:skip-previous"
+      },
+      "auto": {
+        "default": "mdi:calendar-clock"
+      }
+    },
+    "select": {
+      "app": {
+        "default": "mdi:apps"
+      }
+    },
+    "notify": {
+      "message": {
+        "default": "mdi:message-text"
+      }
+    },
+    "binary_sensor": {
+      "cloud": {
+        "default": "mdi:cloud-check",
+        "state": {
+          "off": "mdi:cloud-off-outline"
+        }
+      }
+    }
+  },
+  "services": {
+    "show_message": {
+      "service": "mdi:message-alert"
+    }
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Pixelwall",
+        "description": "Vul het adres van het scherm in je netwerk in en de koppelsleutel. Die vind je op pixelwall.nl → Schermen → je scherm → Home Assistant.",
+        "data": {
+          "host": "Adres",
+          "key": "Koppelsleutel"
+        },
+        "data_description": {
+          "host": "Bijvoorbeeld pixelwall-g4hvh8.local of het IP-adres.",
+          "key": "Begint met pwk_."
+        }
+      },
+      "zeroconf_confirm": {
+        "title": "Pixelwall gevonden",
+        "description": "{name} koppelen? Vul de koppelsleutel in van {url} (tab Home Assistant).",
+        "data": {
+          "key": "Koppelsleutel"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Nieuwe koppelsleutel",
+        "description": "De koppelsleutel van {name} is veranderd. Vul de nieuwe in van {url} (tab Home Assistant).",
+        "data": {
+          "key": "Koppelsleutel"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Het scherm is niet bereikbaar. Staat het aan en draait het firmware 0.9 of nieuwer?",
+      "invalid_auth": "De koppelsleutel klopt niet."
+    },
+    "abort": {
+      "already_configured": "Dit scherm is al gekoppeld.",
+      "cannot_connect": "Het scherm is niet bereikbaar.",
+      "not_pixelwall": "Dit is geen Pixelwall.",
+      "reauth_successful": "De nieuwe koppelsleutel werkt."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "cloud": {
+        "name": "Verbonden met pixelwall.nl"
+      }
+    },
+    "button": {
+      "next": {
+        "name": "Volgende app"
+      },
+      "previous": {
+        "name": "Vorige app"
+      },
+      "auto": {
+        "name": "Helderheidsschema volgen"
+      }
+    },
+    "select": {
+      "app": {
+        "name": "App"
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "Wifi-signaal"
+      }
+    },
+    "notify": {
+      "message": {
+        "name": "Melding"
+      }
+    }
+  },
+  "exceptions": {
+    "unknown_device": {
+      "message": "Dat apparaat is geen gekoppelde Pixelwall."
+    }
+  },
+  "selector": {
+    "icon": {
+      "options": {
+        "bell": "bell",
+        "info": "info",
+        "warning": "warning",
+        "check": "check",
+        "home": "home",
+        "door": "door",
+        "lock": "lock",
+        "car": "car",
+        "mail": "mail",
+        "thermometer": "thermometer",
+        "water": "water",
+        "music": "music",
+        "heart": "heart",
+        "sun": "sun",
+        "bolt": "bolt"
+      }
+    }
+  },
+  "services": {
+    "show_message": {
+      "name": "Melding tonen",
+      "description": "Toont een melding op een Pixelwall, achter meldingen die nog in beeld zijn.",
+      "fields": {
+        "device_id": {
+          "name": "Scherm",
+          "description": "Op welke Pixelwall(s)."
+        },
+        "message": {
+          "name": "Tekst",
+          "description": "Maximaal 200 tekens; lange tekst loopt over meerdere regels."
+        },
+        "title": {
+          "name": "Titel",
+          "description": "In de gekleurde balk (standaard: Home Assistant)."
+        },
+        "icon": {
+          "name": "Icoon",
+          "description": "Pixel-icoon in de balk."
+        },
+        "color": {
+          "name": "Kleur",
+          "description": "Kleur van de balk."
+        },
+        "duration": {
+          "name": "Duur",
+          "description": "Seconden in beeld (standaard: zoals ingesteld bij de Home Assistant-app)."
+        }
+      }
+    }
+  }
+}
