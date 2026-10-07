@@ -35,7 +35,7 @@ async def test_entities(hass: HomeAssistant, aioclient_mock, entry) -> None:
     assert app.attributes["options"] == ["Vluchten", "Weer", "Klok"]
     assert hass.states.get("binary_sensor.woonkamer_connected_to_pixelwall_nl").state == "on"
 
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "G4HVH8")})
+    device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
     assert (device.name, device.sw_version) == ("Woonkamer", "0.9.0")
 
 
@@ -54,7 +54,7 @@ async def test_commands(hass: HomeAssistant, aioclient_mock, entry) -> None:
 
 async def test_messages(hass: HomeAssistant, aioclient_mock, entry) -> None:
     await setup(hass, aioclient_mock, entry)
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "G4HVH8")})
+    device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
 
     await hass.services.async_call(
         DOMAIN,
