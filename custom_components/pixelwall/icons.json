@@ -41,6 +41,15 @@
   "services": {
     "show_message": {
       "service": "mdi:message-alert"
+    },
+    "set_page": {
+      "service": "mdi:view-dashboard-edit"
+    },
+    "delete_page": {
+      "service": "mdi:view-dashboard-remove"
+    },
+    "set_values": {
+      "service": "mdi:form-textbox"
     }
   }
 }

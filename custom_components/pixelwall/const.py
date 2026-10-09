@@ -12,6 +12,13 @@ CONF_KEY = "key"
 SCAN_INTERVAL = timedelta(seconds=10)
 
 SERVICE_SHOW_MESSAGE = "show_message"
+SERVICE_SET_PAGE = "set_page"
+SERVICE_DELETE_PAGE = "delete_page"
+SERVICE_SET_VALUES = "set_values"
+ATTR_PAGE = "page"
+ATTR_LAYOUT = "layout"
+ATTR_ITEMS = "items"
+ATTR_VALUES = "values"
 ATTR_DEVICE_ID = "device_id"
 ATTR_MESSAGE = "message"
 ATTR_TITLE = "title"

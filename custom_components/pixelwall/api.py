@@ -53,6 +53,14 @@ class PixelwallClient:
         """Look for a firmware update now and install it (firmware 0.13.2+)."""
         return await self._request("POST", "/api/update")
 
+    async def page(self, page: dict[str, Any]) -> dict[str, Any]:
+        """A page design {page, title, layout, items}, or {page, delete: true} (firmware 0.13.2+)."""
+        return await self._request("POST", "/api/page", json=page)
+
+    async def values(self, page: str, values: dict[str, str]) -> dict[str, Any]:
+        """New texts for a page's items; the screen shows them at once (firmware 0.13.2+)."""
+        return await self._request("POST", "/api/values", json={"page": page, "values": values})
+
     async def notify(self, message: str, title: str | None = None, icon: str | None = None,
                      color: str | None = None, duration: int | None = None) -> dict[str, Any]:
         body: dict[str, Any] = {"message": message}

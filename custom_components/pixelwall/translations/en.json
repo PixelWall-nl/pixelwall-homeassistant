@@ -107,6 +107,15 @@
         "sun": "sun",
         "bolt": "bolt"
       }
+    },
+    "layout": {
+      "options": {
+        "grid": "Tiles",
+        "value": "One value",
+        "list": "List",
+        "gauge": "Gauge",
+        "chart": "Chart"
+      }
     }
   },
   "services": {
@@ -137,6 +146,64 @@
         "duration": {
           "name": "Duration",
           "description": "Seconds on screen (default: as set for the Home Assistant app)."
+        }
+      }
+    },
+    "set_page": {
+      "name": "Set page",
+      "description": "Creates or replaces a page in the Pixelwall's rotation. Items with an entity follow it by themselves: every change goes straight to the screen.",
+      "fields": {
+        "device_id": {
+          "name": "Screen",
+          "description": "The Pixelwall(s) to show it on."
+        },
+        "page": {
+          "name": "Page",
+          "description": "Name of the page; the same name again replaces it."
+        },
+        "layout": {
+          "name": "Layout",
+          "description": "grid (tiles), value (one big value), list (rows), gauge (bar between min and max) or chart (graph of the first item)."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Small, at the top of the page (optional)."
+        },
+        "items": {
+          "name": "Items",
+          "description": "Up to 6: per item an entity or value, and optionally label, unit, icon, color, min and max."
+        }
+      }
+    },
+    "delete_page": {
+      "name": "Delete page",
+      "description": "Removes a page from the Pixelwall.",
+      "fields": {
+        "device_id": {
+          "name": "Screen",
+          "description": "The Pixelwall(s)."
+        },
+        "page": {
+          "name": "Page",
+          "description": "Name of the page."
+        }
+      }
+    },
+    "set_values": {
+      "name": "Set values",
+      "description": "Sets texts of items on a page (for items without an entity, e.g. from a template). The screen shows them at once.",
+      "fields": {
+        "device_id": {
+          "name": "Screen",
+          "description": "The Pixelwall(s)."
+        },
+        "page": {
+          "name": "Page",
+          "description": "Name of the page."
+        },
+        "values": {
+          "name": "Values",
+          "description": "Text per item key, e.g. {\"gft\": \"tomorrow\"}."
         }
       }
     }

@@ -46,3 +46,77 @@ show_message:
           min: 3
           max: 600
           unit_of_measurement: s
+
+set_page:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: pixelwall
+          multiple: true
+    page:
+      required: true
+      example: thuis
+      selector:
+        text:
+    layout:
+      default: grid
+      selector:
+        select:
+          translation_key: layout
+          options:
+            - grid
+            - value
+            - list
+            - gauge
+            - chart
+    title:
+      example: Thuis
+      selector:
+        text:
+    items:
+      required: true
+      example: |
+        - entity: sensor.woonkamer_temperatuur
+          label: Binnen
+          icon: thermometer
+        - entity: sensor.zonnepanelen_vermogen
+          label: Zon
+          icon: sun
+          color: "#ffcc33"
+      selector:
+        object:
+
+delete_page:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: pixelwall
+          multiple: true
+    page:
+      required: true
+      example: thuis
+      selector:
+        text:
+
+set_values:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: pixelwall
+          multiple: true
+    page:
+      required: true
+      example: afval
+      selector:
+        text:
+    values:
+      required: true
+      example: '{"gft": "morgen", "papier": "vr 17 okt"}'
+      selector:
+        object:

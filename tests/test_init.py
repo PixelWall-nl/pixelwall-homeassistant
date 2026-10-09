@@ -11,7 +11,7 @@ from .conftest import HOST, STATE
 
 
 async def setup(hass: HomeAssistant, aioclient_mock, entry) -> None:
-    for path in ("brightness", "power", "next", "previous", "auto", "show", "enable", "update", "notify"):
+    for path in ("brightness", "power", "next", "previous", "auto", "show", "enable", "update", "notify", "page", "values"):
         aioclient_mock.post(f"http://{HOST}/api/{path}", json=STATE)
     aioclient_mock.get(f"http://{HOST}/api/state", json=STATE)
     entry.add_to_hass(hass)

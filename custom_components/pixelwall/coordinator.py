@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import PixelwallAuthError, PixelwallClient, PixelwallError
 from .const import DOMAIN, SCAN_INTERVAL
+from .pages import PageManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class PixelwallCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def __init__(self, hass: HomeAssistant, entry: PixelwallConfigEntry, client: PixelwallClient) -> None:
         super().__init__(hass, _LOGGER, config_entry=entry, name=DOMAIN, update_interval=SCAN_INTERVAL)
         self.client = client
+        self.pages = PageManager(hass, entry.entry_id, client)
 
     async def _async_update_data(self) -> dict[str, Any]:
         try:

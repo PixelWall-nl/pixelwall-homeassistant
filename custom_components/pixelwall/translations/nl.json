@@ -107,6 +107,15 @@
         "sun": "sun",
         "bolt": "bolt"
       }
+    },
+    "layout": {
+      "options": {
+        "grid": "Tegels",
+        "value": "Eén waarde",
+        "list": "Lijst",
+        "gauge": "Meter",
+        "chart": "Grafiek"
+      }
     }
   },
   "services": {
@@ -137,6 +146,64 @@
         "duration": {
           "name": "Duur",
           "description": "Seconden in beeld (standaard: zoals ingesteld bij de Home Assistant-app)."
+        }
+      }
+    },
+    "set_page": {
+      "name": "Pagina instellen",
+      "description": "Maakt of vervangt een pagina die in de rotatie van de Pixelwall meedraait. Items met een entiteit volgen die vanzelf: elke wijziging gaat direct naar het scherm.",
+      "fields": {
+        "device_id": {
+          "name": "Scherm",
+          "description": "Op welke Pixelwall(s)."
+        },
+        "page": {
+          "name": "Pagina",
+          "description": "Naam van de pagina; dezelfde naam opnieuw vervangt hem."
+        },
+        "layout": {
+          "name": "Indeling",
+          "description": "grid (tegels), value (één grote waarde), list (regels), gauge (balk tussen min en max) of chart (grafiek van het eerste item)."
+        },
+        "title": {
+          "name": "Titel",
+          "description": "Klein bovenaan de pagina (optioneel)."
+        },
+        "items": {
+          "name": "Items",
+          "description": "Maximaal 6: per item entity of value, en optioneel label, unit, icon, color, min en max."
+        }
+      }
+    },
+    "delete_page": {
+      "name": "Pagina verwijderen",
+      "description": "Haalt een pagina van de Pixelwall.",
+      "fields": {
+        "device_id": {
+          "name": "Scherm",
+          "description": "Op welke Pixelwall(s)."
+        },
+        "page": {
+          "name": "Pagina",
+          "description": "Naam van de pagina."
+        }
+      }
+    },
+    "set_values": {
+      "name": "Waarden instellen",
+      "description": "Zet teksten van items op een pagina (voor items zonder entiteit, bijvoorbeeld uit een template). Het scherm toont ze direct.",
+      "fields": {
+        "device_id": {
+          "name": "Scherm",
+          "description": "Op welke Pixelwall(s)."
+        },
+        "page": {
+          "name": "Pagina",
+          "description": "Naam van de pagina."
+        },
+        "values": {
+          "name": "Waarden",
+          "description": "Per item-key de tekst, bijvoorbeeld {\"gft\": \"morgen\"}."
         }
       }
     }
