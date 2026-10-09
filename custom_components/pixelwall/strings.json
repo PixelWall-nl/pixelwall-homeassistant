@@ -71,6 +71,11 @@
       "message": {
         "name": "Message"
       }
+    },
+    "switch": {
+      "rotation": {
+        "name": "{app} in rotation"
+      }
     }
   },
   "exceptions": {

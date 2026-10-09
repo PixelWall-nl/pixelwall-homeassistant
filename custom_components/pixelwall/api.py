@@ -45,6 +45,10 @@ class PixelwallClient:
     async def show(self, app: str) -> dict[str, Any]:
         return await self._request("POST", "/api/show", json={"app": app})
 
+    async def enable(self, app: str, enabled: bool) -> dict[str, Any]:
+        """Takes an app into or out of the rotation (firmware 0.13.0-beta.7+)."""
+        return await self._request("POST", "/api/enable", json={"app": app, "enabled": enabled})
+
     async def notify(self, message: str, title: str | None = None, icon: str | None = None,
                      color: str | None = None, duration: int | None = None) -> dict[str, Any]:
         body: dict[str, Any] = {"message": message}

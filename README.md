@@ -14,6 +14,7 @@ Per scherm één apparaat met:
 |---|---|
 | `light.<scherm>` | Aan/uit en helderheid. Geldt tot het helderheidsschema de volgende keer verandert. |
 | `select.<scherm>_app` | De app die nu in beeld is; kies er een om hem direct te tonen. |
+| `switch.<scherm>_<app>_in_rotatie` | Per app: in de rotatie of niet. Zet bijvoorbeeld Qmusic uit zolang de radio iets anders speelt. Firmware 0.13.0-beta.7+. |
 | `button.<scherm>_volgende_app` / `_vorige_app` | Door de apps bladeren (of een melding wegklikken). |
 | `button.<scherm>_helderheidsschema_volgen` | Terug naar het schema na een handmatige helderheid. |
 | `notify.<scherm>_melding` | Werkt met `notify.send_message`. |
@@ -53,12 +54,13 @@ De integratie gebruikt de API op het scherm zelf; die kun je ook direct aanroepe
 | | |
 |---|---|
 | `GET /api/info` | id, model, firmware, naam (zonder sleutel) |
-| `GET /api/state` | helderheid, aan/uit, huidige app, apps, wifi |
+| `GET /api/state` | helderheid, aan/uit, huidige app, apps (met `enabled`), wifi |
 | `POST /api/brightness?value=0..100[&minutes=N]` | helderheid |
 | `POST /api/power?state=on\|off\|toggle` | aan/uit |
 | `POST /api/auto` | terug naar het schema |
 | `POST /api/next`, `/api/previous` | volgende/vorige app |
 | `POST /api/show` `{"app": "weather"}` | app tonen |
+| `POST /api/enable` `{"app": "weather", "enabled": false}` | app uit (of weer in) de rotatie |
 | `POST /api/notify` `{"title", "message", "icon", "color", "duration"}` | melding |
 
 ## Licentie

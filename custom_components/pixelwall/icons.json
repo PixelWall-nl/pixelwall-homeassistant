@@ -28,6 +28,14 @@
           "off": "mdi:cloud-off-outline"
         }
       }
+    },
+    "switch": {
+      "rotation": {
+        "default": "mdi:sync",
+        "state": {
+          "off": "mdi:sync-off"
+        }
+      }
     }
   },
   "services": {

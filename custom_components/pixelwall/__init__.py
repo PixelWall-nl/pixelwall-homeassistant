@@ -25,7 +25,7 @@ from .const import (
 )
 from .coordinator import PixelwallConfigEntry, PixelwallCoordinator
 
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.LIGHT, Platform.NOTIFY, Platform.SELECT, Platform.SENSOR]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.LIGHT, Platform.NOTIFY, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 

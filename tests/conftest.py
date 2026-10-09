@@ -18,7 +18,11 @@ STATE = {
     "power": "on",
     "scene": "weather-1",
     "app": "weather",
-    "apps": [{"key": "flights", "name": "Vluchten"}, {"key": "weather", "name": "Weer"}, {"key": "clock", "name": "Klok"}],
+    "apps": [
+        {"key": "flights", "name": "Vluchten", "enabled": True},
+        {"key": "weather", "name": "Weer", "enabled": True},
+        {"key": "clock", "name": "Klok", "enabled": False},
+    ],
     "ip": HOST,
     "rssi": -58,
     "online": True,
