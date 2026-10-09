@@ -203,7 +203,7 @@
         },
         "values": {
           "name": "Values",
-          "description": "Text per item key, e.g. {\"gft\": \"tomorrow\"}."
+          "description": "Text per item key, e.g. gft: tomorrow."
         }
       }
     }

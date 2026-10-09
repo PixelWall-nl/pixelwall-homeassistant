@@ -203,7 +203,7 @@
         },
         "values": {
           "name": "Waarden",
-          "description": "Per item-key de tekst, bijvoorbeeld {\"gft\": \"morgen\"}."
+          "description": "Per item-key de tekst, bijvoorbeeld gft: morgen."
         }
       }
     }
