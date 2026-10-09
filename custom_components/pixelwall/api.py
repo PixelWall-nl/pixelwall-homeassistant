@@ -49,6 +49,10 @@ class PixelwallClient:
         """Takes an app into or out of the rotation (firmware 0.13.0-beta.7+)."""
         return await self._request("POST", "/api/enable", json={"app": app, "enabled": enabled})
 
+    async def update(self) -> dict[str, Any]:
+        """Look for a firmware update now and install it (firmware 0.13.2+)."""
+        return await self._request("POST", "/api/update")
+
     async def notify(self, message: str, title: str | None = None, icon: str | None = None,
                      color: str | None = None, duration: int | None = None) -> dict[str, Any]:
         body: dict[str, Any] = {"message": message}

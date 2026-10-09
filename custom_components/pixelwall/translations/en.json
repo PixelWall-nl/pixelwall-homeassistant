@@ -76,6 +76,11 @@
       "rotation": {
         "name": "{app} in rotation"
       }
+    },
+    "update": {
+      "firmware": {
+        "name": "Firmware"
+      }
     }
   },
   "exceptions": {

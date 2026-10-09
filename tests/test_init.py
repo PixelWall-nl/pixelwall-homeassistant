@@ -11,7 +11,7 @@ from .conftest import HOST, STATE
 
 
 async def setup(hass: HomeAssistant, aioclient_mock, entry) -> None:
-    for path in ("brightness", "power", "next", "previous", "auto", "show", "enable", "notify"):
+    for path in ("brightness", "power", "next", "previous", "auto", "show", "enable", "update", "notify"):
         aioclient_mock.post(f"http://{HOST}/api/{path}", json=STATE)
     aioclient_mock.get(f"http://{HOST}/api/state", json=STATE)
     entry.add_to_hass(hass)
@@ -70,13 +70,30 @@ async def test_rotation_switches(hass: HomeAssistant, aioclient_mock, entry) -> 
     assert hass.states.get("switch.woonkamer_vluchten_in_rotation").state == "unavailable"
 
 
-async def test_older_firmware_has_no_rotation_switches(hass: HomeAssistant, aioclient_mock, entry) -> None:
-    state = {**STATE, "apps": [{"key": a["key"], "name": a["name"]} for a in STATE["apps"]]}
+async def test_firmware_update_entity(hass: HomeAssistant, aioclient_mock, entry) -> None:
+    await setup(hass, aioclient_mock, entry)
+    update = hass.states.get("update.woonkamer_firmware")
+    assert update.state == "on"
+    assert (update.attributes["installed_version"], update.attributes["latest_version"]) == ("0.9.0", "0.13.2")
+
+    await hass.services.async_call("update", "install", {"entity_id": "update.woonkamer_firmware"}, blocking=True)
+    assert len(calls(aioclient_mock, "update")) == 1
+
+    coordinator = entry.runtime_data
+    coordinator.async_set_updated_data({**coordinator.data, "updating": True, "update_percent": 42})
+    await hass.async_block_till_done()
+    assert hass.states.get("update.woonkamer_firmware").attributes["update_percentage"] == 42
+
+
+async def test_older_firmware_has_no_rotation_switches_or_update_entity(hass: HomeAssistant, aioclient_mock, entry) -> None:
+    state = {k: v for k, v in STATE.items() if k not in ("latest", "updating", "update_percent")}
+    state["apps"] = [{"key": a["key"], "name": a["name"]} for a in STATE["apps"]]
     aioclient_mock.get(f"http://{HOST}/api/state", json=state)
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     assert hass.states.async_entity_ids("switch") == []
+    assert hass.states.async_entity_ids("update") == []
 
 
 async def test_messages(hass: HomeAssistant, aioclient_mock, entry) -> None:

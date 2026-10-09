@@ -15,6 +15,7 @@ Per scherm één apparaat met:
 | `light.<scherm>` | Aan/uit en helderheid. Geldt tot het helderheidsschema de volgende keer verandert. |
 | `select.<scherm>_app` | De app die nu in beeld is; kies er een om hem direct te tonen. |
 | `switch.<scherm>_<app>_in_rotatie` | Per app: in de rotatie of niet. Zet bijvoorbeeld Qmusic uit zolang de radio iets anders speelt. Firmware 0.13.0-beta.7+. |
+| `update.<scherm>_firmware` | Geïnstalleerde en nieuwste firmware; **Installeren** werkt het scherm direct bij (dat doet het anders zelf binnen een paar minuten). Firmware 0.13.2+. |
 | `button.<scherm>_volgende_app` / `_vorige_app` | Door de apps bladeren (of een melding wegklikken). |
 | `button.<scherm>_helderheidsschema_volgen` | Terug naar het schema na een handmatige helderheid. |
 | `notify.<scherm>_melding` | Werkt met `notify.send_message`. |
@@ -61,6 +62,7 @@ De integratie gebruikt de API op het scherm zelf; die kun je ook direct aanroepe
 | `POST /api/next`, `/api/previous` | volgende/vorige app |
 | `POST /api/show` `{"app": "weather"}` | app tonen |
 | `POST /api/enable` `{"app": "weather", "enabled": false}` | app uit (of weer in) de rotatie |
+| `POST /api/update` | nu naar een firmware-update zoeken en installeren |
 | `POST /api/notify` `{"title", "message", "icon", "color", "duration"}` | melding |
 
 ## Licentie
