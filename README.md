@@ -4,7 +4,9 @@
 [![Validate](https://github.com/PixelWall-nl/pixelwall-homeassistant/actions/workflows/validate.yml/badge.svg)](https://github.com/PixelWall-nl/pixelwall-homeassistant/actions/workflows/validate.yml)
 
 Bedien je [Pixelwall](https://pixelwall.nl)-scherm vanuit Home Assistant en stuur er meldingen naartoe.
-Alles gaat rechtstreeks naar het scherm in je eigen netwerk (geen cloud ertussen).
+Home Assistant praat alleen met het scherm in je eigen netwerk. Het scherm haalt zijn beelden wel
+van pixelwall.nl en geeft daarom door wat je stuurt (meldingen, helderheid, pagina's en de waarden
+erop) aan pixelwall.nl, dat de beelden tekent.
 
 ## Wat krijg je?
 
@@ -76,9 +78,10 @@ data:
 
 **Items met een `entity` volgen die vanzelf.** Je hoeft de pagina maar één keer in te stellen
 (bijvoorbeeld vanuit Ontwikkelhulpmiddelen → Acties). Elke wijziging gaat daarna binnen een
-seconde rechtstreeks naar het scherm, dat de waarde zelf invult: snel, zonder omweg via
-pixelwall.nl, en het blijft werken als pixelwall.nl even weg is. De integratie onthoudt de
-pagina's, ook na een herstart.
+seconde rechtstreeks naar het scherm, dat de waarde zelf invult: snel, zonder op pixelwall.nl te
+wachten, en het blijft werken als pixelwall.nl even weg is. Daarna geeft het scherm de waarden ook
+door aan pixelwall.nl, dat de pagina tekent; het ontwerp van je pagina's en de stand van de
+entiteiten erop komen dus ook daar terecht. De integratie onthoudt de pagina's, ook na een herstart.
 
 Items zonder entiteit krijgen een vaste `value`; die zet je later bij met **`pixelwall.set_values`**,
 bijvoorbeeld vanuit een template:
@@ -105,6 +108,11 @@ Pagina's en lokale waarden hebben firmware 0.13.2 of nieuwer nodig.
 
 Maak je daar een nieuwe sleutel, dan vraagt Home Assistant vanzelf om de nieuwe.
 
+Krijgt het scherm een ander adres, dan volgt de integratie het alleen als het scherm op het nieuwe
+adres aantoont dat het de koppelsleutel kent, zonder dat Home Assistant die sleutel daarheen stuurt
+(firmware 0.13.5+). Zo kan een ander apparaat in je netwerk zich niet als je scherm voordoen. Bij
+oudere firmware blijft het oude adres staan; voeg het scherm dan opnieuw toe met het nieuwe adres.
+
 ## Lokale API
 
 De integratie gebruikt de API op het scherm zelf; die kun je ook direct aanroepen (header `X-Pixelwall-Key`):
@@ -112,6 +120,7 @@ De integratie gebruikt de API op het scherm zelf; die kun je ook direct aanroepe
 | | |
 |---|---|
 | `GET /api/info` | id, model, firmware, naam (zonder sleutel) |
+| `GET /api/info?nonce=<32 hex>` | idem, plus `proof` = HMAC-SHA256(sleutel, `"pixelwall-proof:" + nonce`) in hex (firmware 0.13.5+) |
 | `GET /api/state` | helderheid, aan/uit, huidige app, apps (met `enabled`), wifi |
 | `POST /api/brightness?value=0..100[&minutes=N]` | helderheid |
 | `POST /api/power?state=on\|off\|toggle` | aan/uit |

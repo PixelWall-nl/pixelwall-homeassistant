@@ -1,9 +1,11 @@
 """Pages on the screen that Home Assistant fills (pixelwall.set_page).
 
 A page is a layout (value, grid, list, gauge, chart) with up to six items. An item shows an
-entity's state or a fixed value. The page design goes to the screen once (POST /api/page, the
-server draws it); after that every state change of a tracked entity goes straight to the screen
-as a value (POST /api/values), which fills it in itself: instant, and without pixelwall.nl.
+entity's state or a fixed value. The page design goes to the screen once (POST /api/page), which
+passes it on to pixelwall.nl: the server draws it. After that every state change of a tracked
+entity goes to the screen as a value (POST /api/values); the screen fills it in at once, without
+waiting for pixelwall.nl, and then forwards it there too so the server's copy stays current. So
+page designs and the values on them (entity states included) do reach pixelwall.nl.
 Pages are kept per screen in .storage, so tracking resumes after a restart.
 """
 from __future__ import annotations
