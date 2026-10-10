@@ -81,14 +81,15 @@ class PixelwallConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         entry = self._get_reauth_entry()
         if user_input is not None:
+            key = user_input[CONF_KEY].strip()
             try:
-                await self._client(user_input[CONF_KEY]).state()
+                await self._client(key).state()
             except PixelwallAuthError:
                 errors["base"] = "invalid_auth"
             except PixelwallError:
                 errors["base"] = "cannot_connect"
             else:
-                return self.async_update_reload_and_abort(entry, data_updates={CONF_KEY: user_input[CONF_KEY].strip()})
+                return self.async_update_reload_and_abort(entry, data_updates={CONF_KEY: key})
         return self.async_show_form(
             step_id="reauth_confirm",
             data_schema=KEY_SCHEMA,

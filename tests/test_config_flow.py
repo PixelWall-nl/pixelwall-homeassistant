@@ -142,8 +142,9 @@ async def test_reauth_with_new_key(hass: HomeAssistant, aioclient_mock, entry) -
 
     result = await entry.start_reauth_flow(hass)
     assert result["step_id"] == "reauth_confirm"
-    result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_KEY: "pwk_new"})
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_KEY: " pwk_new\n"})
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reauth_successful"
     assert entry.data[CONF_KEY] == "pwk_new"
+    assert aioclient_mock.mock_calls[0][3] == {"X-Pixelwall-Key": "pwk_new"}, "tested the key as it is stored"
     await hass.async_block_till_done()   # let the reload it triggers finish before teardown
