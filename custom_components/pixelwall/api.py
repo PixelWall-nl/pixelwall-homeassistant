@@ -2,11 +2,23 @@
 from __future__ import annotations
 
 import asyncio
+import json as jsonlib
 from typing import Any
 
 import aiohttp
 
 TIMEOUT = aiohttp.ClientTimeout(total=8)
+# The screen answers with a few hundred bytes; anything this big is not the screen.
+MAX_RESPONSE = 64 * 1024
+
+# What the entities read from /api/state (and command answers) and /api/info, with its type.
+# A field of the wrong type is dropped, as if the firmware didn't report it; other fields pass.
+STATE_FIELDS: dict[str, type] = {
+    "id": str, "name": str, "model": str, "firmware": str, "latest": str, "power": str, "scene": str,
+    "app": str, "ip": str, "proof": str, "brightness": int, "rssi": int, "update_percent": int,
+    "updating": bool, "online": bool, "linked": bool,
+}
+APP_FIELDS: dict[str, type] = {"key": str, "name": str, "enabled": bool}
 
 
 class PixelwallError(Exception):
@@ -27,7 +39,10 @@ class PixelwallClient:
 
     async def info(self) -> dict[str, Any]:
         """Identity of the screen; needs no key."""
-        return await self._request("GET", "/api/info", auth=False)
+        info = await self._request("GET", "/api/info", auth=False)
+        if not info.get("id"):
+            raise PixelwallError(f"{self.host}: no screen id in /api/info")
+        return info
 
     async def state(self) -> dict[str, Any]:
         return await self._request("GET", "/api/state")
@@ -77,9 +92,35 @@ class PixelwallClient:
                                              headers=headers, timeout=TIMEOUT) as resp:
                 if resp.status == 401:
                     raise PixelwallAuthError("invalid key")
-                data = await resp.json(content_type=None)
+                length = resp.headers.get("Content-Length", "")
+                if length.isdigit() and int(length) > MAX_RESPONSE:
+                    raise PixelwallError(f"{self.host}: answer too large")
+                body = await resp.content.read(MAX_RESPONSE + 1)
+                if len(body) > MAX_RESPONSE:
+                    raise PixelwallError(f"{self.host}: answer too large")
+                data = jsonlib.loads(body) if body.strip() else {}
                 if resp.status >= 400:
-                    raise PixelwallError(data.get("error", f"HTTP {resp.status}") if isinstance(data, dict) else f"HTTP {resp.status}")
-                return data if isinstance(data, dict) else {}
+                    error = data.get("error") if isinstance(data, dict) else None
+                    raise PixelwallError(error[:100] if isinstance(error, str) else f"HTTP {resp.status}")
+                return clean(data)
         except (aiohttp.ClientError, asyncio.TimeoutError, ValueError) as err:
             raise PixelwallError(f"{self.host}: {err}") from err
+
+
+def clean(data: Any) -> dict[str, Any]:
+    """The answer with malformed fields dropped, so a confused screen can't trip up an entity."""
+    if not isinstance(data, dict):
+        return {}
+    out = {k: v for k, v in data.items() if k not in STATE_FIELDS and k != "apps"}
+    for field, kind in STATE_FIELDS.items():
+        # bool is an int to Python; a brightness of true is still wrong.
+        if isinstance(data.get(field), kind) and (kind is bool or not isinstance(data[field], bool)):
+            out[field] = data[field]
+    if "apps" in data:
+        apps = data["apps"] if isinstance(data["apps"], list) else []
+        out["apps"] = [
+            {k: app[k] for k, kind in APP_FIELDS.items() if isinstance(app.get(k), kind)}
+            for app in apps
+            if isinstance(app, dict) and isinstance(app.get("key"), str) and app["key"]
+        ]
+    return out
