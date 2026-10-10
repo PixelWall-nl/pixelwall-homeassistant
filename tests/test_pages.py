@@ -96,3 +96,14 @@ async def test_service_limits(hass: HomeAssistant, aioclient_mock, entry, servic
     with pytest.raises(vol.Invalid):
         await hass.services.async_call(DOMAIN, service, {"device_id": device.id, **data}, blocking=True)
     assert calls(aioclient_mock, "page") == [] and calls(aioclient_mock, "notify") == []
+
+
+async def test_pages_go_when_the_screen_is_removed(hass: HomeAssistant, aioclient_mock, entry, hass_storage) -> None:
+    await setup(hass, aioclient_mock, entry)
+    device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
+    await hass.services.async_call(DOMAIN, "set_page", {"device_id": device.id, "page": "afval", "items": [{"key": "gft", "value": "morgen"}]}, blocking=True)
+    assert f"pixelwall.pages.{entry.entry_id}" in hass_storage
+
+    await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+    assert f"pixelwall.pages.{entry.entry_id}" not in hass_storage

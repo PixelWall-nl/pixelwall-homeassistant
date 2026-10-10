@@ -28,6 +28,11 @@ MAX_ITEMS = 6
 SEND_DELAY = 1.0
 
 
+def page_store(hass: HomeAssistant, entry_id: str) -> Store[dict[str, Any]]:
+    """Where the pages of one screen (config entry) are kept: .storage/pixelwall.pages.<entry_id>."""
+    return Store(hass, 1, f"pixelwall.pages.{entry_id}")
+
+
 def slug(text: str, length: int) -> str:
     """Same rule as the server: lowercase, anything else than a-z 0-9 _ becomes _."""
     return re.sub(r"[^a-z0-9_]+", "_", str(text).strip().lower())[:length]
@@ -43,7 +48,7 @@ class PageManager:
     def __init__(self, hass: HomeAssistant, entry_id: str, client: PixelwallClient) -> None:
         self.hass = hass
         self.client = client
-        self._store: Store[dict[str, Any]] = Store(hass, 1, f"pixelwall.pages.{entry_id}")
+        self._store = page_store(hass, entry_id)
         self.pages: dict[str, dict[str, Any]] = {}
         self._unsub = None
         self._pending: dict[str, asyncio.TimerHandle] = {}

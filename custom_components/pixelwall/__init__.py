@@ -31,7 +31,7 @@ from .const import (
     SERVICE_SHOW_MESSAGE,
 )
 from .coordinator import PixelwallConfigEntry, PixelwallCoordinator
-from .pages import LAYOUTS, MAX_ITEMS
+from .pages import LAYOUTS, MAX_ITEMS, page_store
 
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.LIGHT, Platform.NOTIFY, Platform.SELECT, Platform.SENSOR, Platform.SWITCH, Platform.UPDATE]
 
@@ -164,3 +164,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: PixelwallConfigEntry) ->
 
 async def async_unload_entry(hass: HomeAssistant, entry: PixelwallConfigEntry) -> bool:
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: PixelwallConfigEntry) -> None:
+    """The screen is unlinked: its pages (and the entities they named) go with it."""
+    await page_store(hass, entry.entry_id).async_remove()
