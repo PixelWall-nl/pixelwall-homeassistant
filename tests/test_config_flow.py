@@ -44,6 +44,18 @@ async def test_user_flow_wrong_key_and_unreachable(hass: HomeAssistant, aioclien
     assert result["errors"] == {"base": "cannot_connect"}
 
 
+async def test_user_flow_refuses_odd_addresses(hass: HomeAssistant, aioclient_mock) -> None:
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
+    for host in ("https://192.0.2.10", "192.0.2.10/api?x=1", "user@evil.example"):
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_HOST: host, CONF_KEY: KEY})
+        assert result["errors"] == {CONF_HOST: "invalid_host"}
+    assert aioclient_mock.call_count == 0, "nothing is sent to an address that isn't one"
+
+    aioclient_mock.get(f"http://{HOST}/api/info", json={"name": "No id"})
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_HOST: HOST, CONF_KEY: KEY})
+    assert result["errors"] == {"base": "cannot_connect"}
+
+
 async def test_zeroconf_flow(hass: HomeAssistant, aioclient_mock) -> None:
     aioclient_mock.get(f"http://{HOST}/api/info", json=INFO)
     aioclient_mock.get(f"http://{HOST}/api/state", json=STATE)

@@ -5,7 +5,7 @@ import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from custom_components.pixelwall.api import MAX_RESPONSE, PixelwallClient, PixelwallError
+from custom_components.pixelwall.api import MAX_RESPONSE, PixelwallClient, PixelwallError, normalize_host
 
 from .conftest import HOST, KEY, STATE
 from .test_init import setup
@@ -68,3 +68,31 @@ async def test_entities_survive_a_malformed_state(hass: HomeAssistant, aioclient
     assert hass.states.get("select.woonkamer_app").attributes["options"] == []
     assert hass.states.get("switch.woonkamer_weer_in_rotation").state == "on"
     assert hass.states.get("update.woonkamer_firmware").attributes["update_percentage"] is None
+
+
+@pytest.mark.parametrize(("typed", "host"), [
+    ("192.0.2.10", "192.0.2.10"),
+    (" http://192.0.2.10/ ", "192.0.2.10"),
+    ("HTTP://pixelwall-g4hvh8.local", "pixelwall-g4hvh8.local"),
+    ("pixelwall-g4hvh8.local:8080", "pixelwall-g4hvh8.local:8080"),
+    ("fd00::1", "[fd00::1]"),
+    ("[fd00:0::1]:80", "[fd00::1]:80"),
+    ("http://[fd00::1]/", "[fd00::1]"),
+])
+def test_normalize_host_accepts(typed: str, host: str) -> None:
+    assert normalize_host(typed) == host
+
+
+@pytest.mark.parametrize("typed", [
+    "", "https://192.0.2.10", "ftp://192.0.2.10", "192.0.2.10/api", "192.0.2.10?x=1", "192.0.2.10#x",
+    "user@192.0.2.10", "user:pw@evil.example", "192.0.2.10:0", "192.0.2.10:99999", "192.0.2.10:http",
+    "[192.0.2.10]", "[fd00::1", "fd00::zz", "pixel wall.local", "-pixelwall.local", "http://",
+])
+def test_normalize_host_refuses(typed: str) -> None:
+    assert normalize_host(typed) is None
+
+
+async def test_ipv6_hosts_get_brackets(hass: HomeAssistant, aioclient_mock) -> None:
+    aioclient_mock.get("http://[fd00::1]/api/state", json={"name": "Woonkamer"})
+    assert (await client(hass, "fd00::1").state())["name"] == "Woonkamer"
+    assert (await client(hass, "[fd00::1]").state())["name"] == "Woonkamer"

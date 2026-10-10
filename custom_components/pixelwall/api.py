@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import asyncio
 import json as jsonlib
+import re
+from ipaddress import IPv6Address, ip_address
 from typing import Any
 
 import aiohttp
@@ -20,6 +22,8 @@ STATE_FIELDS: dict[str, type] = {
 }
 APP_FIELDS: dict[str, type] = {"key": str, "name": str, "enabled": bool}
 
+HOSTNAME = re.compile(r"^(?=.{1,253}$)[a-z0-9_]([a-z0-9_-]{0,62})(\.[a-z0-9_]([a-z0-9_-]{0,62}))*\.?$", re.IGNORECASE)
+
 
 class PixelwallError(Exception):
     """The screen could not be reached or answered with an error."""
@@ -29,6 +33,46 @@ class PixelwallAuthError(PixelwallError):
     """The key was rejected (regenerated in the dashboard?)."""
 
 
+def normalize_host(text: str) -> str | None:
+    """What someone typed as the screen's address → host[:port], or None if it is anything else.
+
+    "http://pixelwall-g4hvh8.local/" → "pixelwall-g4hvh8.local"; IPv6 gets brackets ("[fd00::1]:80").
+    Paths, queries, user info and other schemes (https://) are refused.
+    """
+    host = text.strip()
+    if host[:7].lower() == "http://":
+        host = host[7:]
+    host = host.rstrip("/")
+    if not host or any(c in host for c in "/?#@\\ "):
+        return None
+    if bracketed := re.fullmatch(r"\[([0-9a-fA-F:.]+)\](?::(\d{1,5}))?", host):
+        address, port = bracketed.groups()
+    elif host.count(":") > 1:
+        address, port = host, None   # bare IPv6, no room for a port
+    else:
+        address, colon, port = host.partition(":")
+        port = port if colon else None
+        if not HOSTNAME.fullmatch(address):
+            return None
+    if port is not None and not (port.isdigit() and 0 < int(port) < 65536):
+        return None
+    if bracketed or host.count(":") > 1:
+        try:
+            if not isinstance(ip := ip_address(address), IPv6Address):
+                return None
+        except ValueError:
+            return None
+        address = f"[{ip.compressed}]"
+    return f"{address}:{int(port)}" if port is not None else address
+
+
+def base_url(host: str) -> str:
+    """http://host[:port]; a bare IPv6 address (as zeroconf reports it) gets its brackets."""
+    if host.count(":") > 1 and not host.startswith("["):
+        host = f"[{host}]"
+    return f"http://{host}"
+
+
 class PixelwallClient:
     """Talks to http://<host>/api/… with the screen's key."""
 
@@ -36,6 +80,7 @@ class PixelwallClient:
         self._session = session
         self.host = host
         self._key = key
+        self._url = base_url(host)
 
     async def info(self) -> dict[str, Any]:
         """Identity of the screen; needs no key."""
@@ -88,7 +133,7 @@ class PixelwallClient:
                        params: dict[str, Any] | None = None, json: dict[str, Any] | None = None) -> dict[str, Any]:
         headers = {"X-Pixelwall-Key": self._key} if auth and self._key else {}
         try:
-            async with self._session.request(method, f"http://{self.host}{path}", params=params, json=json,
+            async with self._session.request(method, f"{self._url}{path}", params=params, json=json,
                                              headers=headers, timeout=TIMEOUT) as resp:
                 if resp.status == 401:
                     raise PixelwallAuthError("invalid key")

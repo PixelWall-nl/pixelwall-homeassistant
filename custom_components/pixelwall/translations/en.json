@@ -31,7 +31,8 @@
     },
     "error": {
       "cannot_connect": "Cannot reach the screen. Is it on and does it run firmware 0.9 or newer?",
-      "invalid_auth": "The key is not correct."
+      "invalid_auth": "The key is not correct.",
+      "invalid_host": "Not a valid address: enter a host name or IP address, optionally with :port."
     },
     "abort": {
       "already_configured": "This screen is already set up.",

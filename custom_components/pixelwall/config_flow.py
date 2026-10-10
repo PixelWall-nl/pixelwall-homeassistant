@@ -10,7 +10,7 @@ from homeassistant.const import CONF_HOST
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
-from .api import PixelwallAuthError, PixelwallClient, PixelwallError
+from .api import PixelwallAuthError, PixelwallClient, PixelwallError, normalize_host
 from .const import CONF_KEY, DASHBOARD_URL, DOMAIN
 
 KEY_SCHEMA = vol.Schema({vol.Required(CONF_KEY): str})
@@ -26,18 +26,21 @@ class PixelwallConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
-            self._host = user_input[CONF_HOST].strip().removeprefix("http://").rstrip("/")
-            try:
-                self._info = await self._client().info()
-            except PixelwallError:
-                errors["base"] = "cannot_connect"
+            self._host = normalize_host(user_input[CONF_HOST])
+            if self._host is None:
+                errors[CONF_HOST] = "invalid_host"
             else:
-                await self.async_set_unique_id(self._info["id"])
-                self._abort_if_unique_id_configured(updates={CONF_HOST: self._host})
-                return await self._finish(user_input[CONF_KEY], errors, "user")
+                try:
+                    self._info = await self._client().info()
+                except PixelwallError:
+                    errors["base"] = "cannot_connect"
+                else:
+                    await self.async_set_unique_id(self._info["id"])
+                    self._abort_if_unique_id_configured(updates={CONF_HOST: self._host})
+                    return await self._finish(user_input[CONF_KEY], errors, "user")
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema({vol.Required(CONF_HOST, default=self._host or ""): str, vol.Required(CONF_KEY): str}),
+            data_schema=vol.Schema({vol.Required(CONF_HOST, default=(user_input or {}).get(CONF_HOST, "")): str, vol.Required(CONF_KEY): str}),
             errors=errors,
         )
 

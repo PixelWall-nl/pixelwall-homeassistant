@@ -31,7 +31,8 @@
     },
     "error": {
       "cannot_connect": "Het scherm is niet bereikbaar. Staat het aan en draait het firmware 0.9 of nieuwer?",
-      "invalid_auth": "De koppelsleutel klopt niet."
+      "invalid_auth": "De koppelsleutel klopt niet.",
+      "invalid_host": "Geen geldig adres: vul een hostnaam of IP-adres in, eventueel met :poort."
     },
     "abort": {
       "already_configured": "Dit scherm is al gekoppeld.",
