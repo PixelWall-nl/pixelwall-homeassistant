@@ -1,14 +1,20 @@
 """Config flow: by address, via zeroconf, and a new key after it was regenerated."""
 from __future__ import annotations
 
+import hashlib
+import hmac
+import logging
 from dataclasses import replace
 from ipaddress import ip_address
+
+import pytest
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClientMockResponse
 
 from custom_components.pixelwall.const import CONF_KEY, DOMAIN
 
@@ -56,18 +62,32 @@ async def test_user_flow_refuses_odd_addresses(hass: HomeAssistant, aioclient_mo
     assert result["errors"] == {"base": "cannot_connect"}
 
 
+DISCOVERY = ZeroconfServiceInfo(
+    ip_address=ip_address(HOST),
+    ip_addresses=[ip_address(HOST)],
+    hostname="pixelwall-g4hvh8.local.",
+    name="pixelwall-g4hvh8._pixelwall._tcp.local.",
+    port=80,
+    type="_pixelwall._tcp.local.",
+    properties={"id": "G4HVH8", "model": "hd-wf2", "fw": "0.9.0"},
+)
+MOVED = replace(DISCOVERY, ip_address=ip_address("192.0.2.11"), ip_addresses=[ip_address("192.0.2.11")])
+
+
+def proving(key: str, screen_id: str = "G4HVH8"):
+    """/api/info of firmware 0.13.5+: proof = HMAC-SHA256(key, "pixelwall-proof:" + nonce)."""
+    async def answer(method, url, data):
+        nonce = url.query["nonce"]
+        assert len(nonce) == 32 and all(c in "0123456789abcdef" for c in nonce)
+        proof = hmac.new(key.encode(), f"pixelwall-proof:{nonce}".encode(), hashlib.sha256).hexdigest()
+        return AiohttpClientMockResponse(method, url, json={**INFO, "id": screen_id, "proof": proof})
+    return answer
+
+
 async def test_zeroconf_flow(hass: HomeAssistant, aioclient_mock) -> None:
     aioclient_mock.get(f"http://{HOST}/api/info", json=INFO)
     aioclient_mock.get(f"http://{HOST}/api/state", json=STATE)
-    discovery = ZeroconfServiceInfo(
-        ip_address=ip_address(HOST),
-        ip_addresses=[ip_address(HOST)],
-        hostname="pixelwall-g4hvh8.local.",
-        name="pixelwall-g4hvh8._pixelwall._tcp.local.",
-        port=80,
-        type="_pixelwall._tcp.local.",
-        properties={"id": "G4HVH8", "model": "hd-wf2", "fw": "0.9.0"},
-    )
+    discovery = DISCOVERY
 
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_ZEROCONF}, data=discovery)
     assert result["type"] is FlowResultType.FORM
@@ -76,12 +96,44 @@ async def test_zeroconf_flow(hass: HomeAssistant, aioclient_mock) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Woonkamer"
 
-    # found again on a new address: the entry follows, no second flow
+    # found again on the same address: nothing to ask
     aioclient_mock.clear_requests()
-    moved = replace(discovery, ip_address=ip_address("192.0.2.11"), ip_addresses=[ip_address("192.0.2.11")])
-    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_ZEROCONF}, data=moved)
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_ZEROCONF}, data=discovery)
+    assert result["reason"] == "already_configured"
+    assert aioclient_mock.call_count == 0
+
+
+async def test_zeroconf_follows_a_new_address_that_proves_the_key(hass: HomeAssistant, aioclient_mock, entry) -> None:
+    entry.add_to_hass(hass)
+    aioclient_mock.get("http://192.0.2.11/api/info", side_effect=proving(KEY))
+
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_ZEROCONF}, data=MOVED)
+    assert result["reason"] == "already_configured"
+    assert entry.data[CONF_HOST] == "192.0.2.11"
+    assert [c[3] for c in aioclient_mock.mock_calls] == [{}], "the key itself never goes to the new address"
+    await hass.async_block_till_done()   # let the reload it triggers finish before teardown
+
+
+@pytest.mark.parametrize("answer", [
+    {"json": INFO},                                                         # firmware before 0.13.5: no proof
+    {"side_effect": proving("pwk_someoneelse")},                            # proof with another key
+    {"side_effect": proving(KEY, screen_id="OTHER1")},                      # a proof for another screen
+    {"json": {**INFO, "proof": "nope"}},
+    {"json": {**INFO, "proof": "ü" * 64}},
+    {"exc": TimeoutError()},
+])
+async def test_zeroconf_keeps_the_address_without_proof(hass: HomeAssistant, aioclient_mock, entry, caplog, answer) -> None:
+    entry.add_to_hass(hass)
+    aioclient_mock.get("http://192.0.2.11/api/info", **answer)
+    caplog.set_level(logging.DEBUG)
+
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_ZEROCONF}, data=MOVED)
     assert result["type"] is FlowResultType.ABORT
-    assert hass.config_entries.async_entries(DOMAIN)[0].data[CONF_HOST] == "192.0.2.11"
+    assert result["reason"] == "already_configured"
+    assert entry.data[CONF_HOST] == HOST
+    assert all(c[3] == {} for c in aioclient_mock.mock_calls)
+    assert "keeping its address" in caplog.text
+    assert KEY not in caplog.text
 
 
 async def test_reauth_with_new_key(hass: HomeAssistant, aioclient_mock, entry) -> None:

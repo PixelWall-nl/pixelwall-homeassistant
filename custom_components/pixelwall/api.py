@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import hmac
 import json as jsonlib
 import re
 from ipaddress import IPv6Address, ip_address
@@ -21,6 +23,8 @@ STATE_FIELDS: dict[str, type] = {
     "updating": bool, "online": bool, "linked": bool,
 }
 APP_FIELDS: dict[str, type] = {"key": str, "name": str, "enabled": bool}
+
+PROOF_PREFIX = "pixelwall-proof:"
 
 HOSTNAME = re.compile(r"^(?=.{1,253}$)[a-z0-9_]([a-z0-9_-]{0,62})(\.[a-z0-9_]([a-z0-9_-]{0,62}))*\.?$", re.IGNORECASE)
 
@@ -82,9 +86,13 @@ class PixelwallClient:
         self._key = key
         self._url = base_url(host)
 
-    async def info(self) -> dict[str, Any]:
-        """Identity of the screen; needs no key."""
-        info = await self._request("GET", "/api/info", auth=False)
+    async def info(self, nonce: str | None = None) -> dict[str, Any]:
+        """Identity of the screen; never sends the key.
+
+        With a nonce, firmware 0.13.5+ adds "proof" (see valid_proof): the screen shows it holds
+        the key without us handing it to a host we don't trust yet.
+        """
+        info = await self._request("GET", "/api/info", auth=False, params={"nonce": nonce} if nonce else None)
         if not info.get("id"):
             raise PixelwallError(f"{self.host}: no screen id in /api/info")
         return info
@@ -150,6 +158,14 @@ class PixelwallClient:
                 return clean(data)
         except (aiohttp.ClientError, asyncio.TimeoutError, ValueError) as err:
             raise PixelwallError(f"{self.host}: {err}") from err
+
+
+def valid_proof(key: str, nonce: str, proof: Any) -> bool:
+    """Whether proof is HMAC-SHA256(key, "pixelwall-proof:" + nonce) in lowercase hex."""
+    if not isinstance(proof, str):
+        return False
+    expected = hmac.new(key.encode(), f"{PROOF_PREFIX}{nonce}".encode(), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected.encode(), proof.encode())
 
 
 def clean(data: Any) -> dict[str, Any]:

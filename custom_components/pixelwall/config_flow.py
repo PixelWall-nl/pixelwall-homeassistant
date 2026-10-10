@@ -1,6 +1,8 @@
 """Config flow: found via zeroconf (_pixelwall._tcp) or by address; the key comes from pixelwall.nl."""
 from __future__ import annotations
 
+import logging
+import secrets
 from collections.abc import Mapping
 from typing import Any
 
@@ -10,8 +12,10 @@ from homeassistant.const import CONF_HOST
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
-from .api import PixelwallAuthError, PixelwallClient, PixelwallError, normalize_host
+from .api import PixelwallAuthError, PixelwallClient, PixelwallError, normalize_host, valid_proof
 from .const import CONF_KEY, DASHBOARD_URL, DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 KEY_SCHEMA = vol.Schema({vol.Required(CONF_KEY): str})
 
@@ -50,7 +54,12 @@ class PixelwallConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="not_pixelwall")
         self._host = discovery_info.host
         await self.async_set_unique_id(screen_id)
-        self._abort_if_unique_id_configured(updates={CONF_HOST: self._host})
+        # Anything on the network can announce a (public) screen id: the entry only follows a new
+        # address that proves it holds the key, otherwise the key would go to whoever announced it.
+        entry = self.hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, screen_id)
+        if entry is not None and entry.data.get(CONF_HOST) != self._host and await self._holds_key(entry.data[CONF_KEY]):
+            self._abort_if_unique_id_configured(updates={CONF_HOST: self._host})
+        self._abort_if_unique_id_configured()
         try:
             self._info = await self._client().info()
         except PixelwallError:
@@ -105,6 +114,22 @@ class PixelwallConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors=errors,
             )
         return self._key_form(step, errors)
+
+    async def _holds_key(self, key: str) -> bool:
+        """Whether the screen at the newly found address knows the key, asked without sending it (firmware 0.13.5+)."""
+        nonce = secrets.token_hex(16)
+        try:
+            info = await self._client().info(nonce)
+        except PixelwallError as err:
+            _LOGGER.debug("Pixelwall %s announced at %s, but no answer there (%s); keeping its address", self.unique_id, self._host, err)
+            return False
+        if "proof" not in info:
+            _LOGGER.debug("Pixelwall %s announced at %s without proof of its key (firmware before 0.13.5?); keeping its address", self.unique_id, self._host)
+            return False
+        if info.get("id") == self.unique_id and valid_proof(key, nonce, info["proof"]):
+            return True
+        _LOGGER.warning("Pixelwall %s announced at %s, but that host does not hold its key; keeping its address", self.unique_id, self._host)
+        return False
 
     def _key_form(self, step: str, errors: dict[str, str]) -> ConfigFlowResult:
         return self.async_show_form(
