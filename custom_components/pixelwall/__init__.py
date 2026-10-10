@@ -42,13 +42,21 @@ COLOR = vol.Any(
     vol.All(vol.ExactSequence((cv.byte, cv.byte, cv.byte)), lambda rgb: "#{:02x}{:02x}{:02x}".format(*rgb)),
 )
 DEVICES = vol.All(cv.ensure_list, [cv.string])
+ICON = vol.All(cv.string, vol.Length(max=32))
+PAGE = vol.All(cv.string, vol.Length(min=1, max=32))
+ITEM_KEY = vol.All(cv.string, vol.Length(min=1, max=32))
+# A gauge's ends: a number, not nan or inf (those don't survive the trip as JSON).
+BOUND = vol.All(vol.Coerce(float), vol.Range(min=-1e9, max=1e9))
+# set_values: a page has at most six items; this leaves room for old keys without letting a template flood the screen.
+MAX_VALUES = 32
+TEXT = vol.All(cv.string, vol.Length(max=255))
 
 SHOW_MESSAGE_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_DEVICE_ID): DEVICES,
         vol.Required(ATTR_MESSAGE): vol.All(cv.string, vol.Length(min=1, max=200)),
         vol.Optional(ATTR_TITLE): vol.All(cv.string, vol.Length(max=60)),
-        vol.Optional(ATTR_ICON): cv.string,
+        vol.Optional(ATTR_ICON): ICON,
         vol.Optional(ATTR_COLOR): COLOR,
         vol.Optional(ATTR_DURATION): vol.All(vol.Coerce(int), vol.Range(min=3, max=600)),
     }
@@ -57,15 +65,15 @@ SHOW_MESSAGE_SCHEMA = vol.Schema(
 ITEM_SCHEMA = vol.All(
     vol.Schema(
         {
-            vol.Optional("key"): cv.string,
+            vol.Optional("key"): ITEM_KEY,
             vol.Optional("label"): vol.All(cv.string, vol.Length(max=24)),
             vol.Optional("entity"): cv.entity_id,
-            vol.Optional("value"): vol.Any(cv.string, vol.Coerce(float)),
+            vol.Optional("value"): vol.Any(TEXT, vol.Coerce(float)),
             vol.Optional("unit"): vol.All(cv.string, vol.Length(max=8)),
-            vol.Optional(ATTR_ICON): cv.string,
+            vol.Optional(ATTR_ICON): ICON,
             vol.Optional(ATTR_COLOR): COLOR,
-            vol.Optional("min"): vol.Coerce(float),
-            vol.Optional("max"): vol.Coerce(float),
+            vol.Optional("min"): BOUND,
+            vol.Optional("max"): BOUND,
         }
     ),
     cv.has_at_least_one_key("entity", "value"),
@@ -74,20 +82,23 @@ ITEM_SCHEMA = vol.All(
 SET_PAGE_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_DEVICE_ID): DEVICES,
-        vol.Required(ATTR_PAGE): vol.All(cv.string, vol.Length(min=1, max=32)),
+        vol.Required(ATTR_PAGE): PAGE,
         vol.Optional(ATTR_LAYOUT, default="grid"): vol.In(LAYOUTS),
         vol.Optional(ATTR_TITLE): vol.All(cv.string, vol.Length(max=40)),
         vol.Required(ATTR_ITEMS): vol.All(cv.ensure_list, vol.Length(min=1, max=MAX_ITEMS), [ITEM_SCHEMA]),
     }
 )
 
-DELETE_PAGE_SCHEMA = vol.Schema({vol.Required(ATTR_DEVICE_ID): DEVICES, vol.Required(ATTR_PAGE): cv.string})
+DELETE_PAGE_SCHEMA = vol.Schema({vol.Required(ATTR_DEVICE_ID): DEVICES, vol.Required(ATTR_PAGE): PAGE})
 
 SET_VALUES_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_DEVICE_ID): DEVICES,
-        vol.Required(ATTR_PAGE): cv.string,
-        vol.Required(ATTR_VALUES): {cv.string: vol.Any(cv.string, vol.Coerce(float))},
+        vol.Required(ATTR_PAGE): PAGE,
+        vol.Required(ATTR_VALUES): vol.All(
+            {ITEM_KEY: TEXT},
+            vol.Length(max=MAX_VALUES),
+        ),
     }
 )
 

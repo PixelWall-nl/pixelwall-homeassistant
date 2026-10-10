@@ -117,6 +117,9 @@ async def test_messages(hass: HomeAssistant, aioclient_mock, entry) -> None:
     await hass.services.async_call("notify", "send_message", {"entity_id": "notify.woonkamer_message", "message": "Wasmachine klaar", "title": "Was"}, blocking=True)
     assert calls(aioclient_mock, "notify")[-1][2] == {"message": "Wasmachine klaar", "title": "Was"}
 
+    await hass.services.async_call("notify", "send_message", {"entity_id": "notify.woonkamer_message", "message": "x" * 500, "title": "t" * 100}, blocking=True)
+    assert calls(aioclient_mock, "notify")[-1][2] == {"message": "x" * 200, "title": "t" * 60}, "same limits as show_message"
+
 
 async def test_regenerated_key_starts_reauth(hass: HomeAssistant, aioclient_mock, entry) -> None:
     aioclient_mock.get(f"http://{HOST}/api/state", status=401, json={"error": "invalid key"})

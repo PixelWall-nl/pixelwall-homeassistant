@@ -15,4 +15,5 @@ async def async_setup_entry(hass: HomeAssistant, entry: PixelwallConfigEntry, as
 
 class PixelwallNotify(PixelwallEntity, NotifyEntity):
     async def async_send_message(self, message: str, title: str | None = None) -> None:
-        await self.coordinator.run(self.coordinator.client.notify(message, title=title))
+        # Same limits as pixelwall.show_message; notify.send_message has no room to refuse nicely.
+        await self.coordinator.run(self.coordinator.client.notify(message[:200], title=title[:60] if title else None))

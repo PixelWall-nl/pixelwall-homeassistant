@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import pytest
+import voluptuous as vol
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.util import dt as dt_util
@@ -71,3 +73,26 @@ async def test_pages_survive_a_restart(hass: HomeAssistant, aioclient_mock, entr
     await setup(hass, aioclient_mock, entry)
 
     assert calls(aioclient_mock, "values")[-1][2] == {"page": "co2", "values": {"ppm": "612 ppm"}}
+
+
+@pytest.mark.parametrize(("service", "data"), [
+    ("set_page", {"page": "x" * 33, "items": [{"value": "1"}]}),
+    ("set_page", {"page": "thuis", "items": [{"value": "1", "icon": "i" * 33}]}),
+    ("set_page", {"page": "thuis", "items": [{"value": "1", "key": "k" * 33}]}),
+    ("set_page", {"page": "thuis", "items": [{"value": "v" * 256}]}),
+    ("set_page", {"page": "thuis", "layout": "gauge", "items": [{"value": "1", "min": float("nan")}]}),
+    ("set_page", {"page": "thuis", "layout": "gauge", "items": [{"value": "1", "max": "inf"}]}),
+    ("delete_page", {"page": "x" * 33}),
+    ("delete_page", {"page": ""}),
+    ("set_values", {"page": "x" * 33, "values": {"a": "1"}}),
+    ("set_values", {"page": "thuis", "values": {"k" * 33: "1"}}),
+    ("set_values", {"page": "thuis", "values": {"a": "v" * 256}}),
+    ("set_values", {"page": "thuis", "values": {f"k{i}": "1" for i in range(33)}}),
+    ("show_message", {"message": "hoi", "icon": "i" * 33}),
+])
+async def test_service_limits(hass: HomeAssistant, aioclient_mock, entry, service: str, data: dict) -> None:
+    await setup(hass, aioclient_mock, entry)
+    device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(DOMAIN, service, {"device_id": device.id, **data}, blocking=True)
+    assert calls(aioclient_mock, "page") == [] and calls(aioclient_mock, "notify") == []
